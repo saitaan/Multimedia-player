@@ -1,4 +1,4 @@
-name: Build Multimedia Android APK
+name: Build APK
 
 on:
   push:
@@ -6,42 +6,27 @@ on:
 
 jobs:
   build:
-    name: Build Multimedia APK
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Unzip Source Code
-        run: |
-          if [ -f "multimedia-spatial-audio.zip" ]; then
-            unzip -o multimedia-spatial-audio.zip
-          fi
+      - name: Extract Project
+        run: unzip -o *.zip
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v3
 
-      - name: Generate Gradle Wrapper if missing
+      - name: Compile APK
         run: |
-          if [ ! -f "./gradlew" ]; then
-            gradle wrapper --gradle-version 8.4
-          fi
+          gradle wrapper --gradle-version 8.4
           chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: Multimedia-debug
           path: app/build/outputs/apk/debug/*.apk
-          retention-days: 14
-          
