@@ -21,7 +21,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
 
       - name: Setup Gradle 8.4
         uses: gradle/actions/setup-gradle@v3
@@ -29,8 +28,15 @@ jobs:
           gradle-version: '8.4'
           validate-wrappers: false
 
-      - name: Generate Wrapper & Build Debug APK
+      - name: Auto-Detect Project & Build APK
         run: |
+          SETTINGS_FILE=$(find . -maxdepth 3 -name "settings.gradle*" | head -n 1)
+          if [ -n "$SETTINGS_FILE" ]; then
+            TARGET_DIR=$(dirname "$SETTINGS_FILE")
+            echo "Building inside directory: $TARGET_DIR"
+            cd "$TARGET_DIR"
+          fi
+
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
             gradle wrapper --gradle-version 8.4
           fi
@@ -42,7 +48,6 @@ jobs:
         if: always()
         with:
           name: Multimedia-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: "**/build/outputs/apk/debug/*.apk"
           if-no-files-found: warn
           retention-days: 14
-          
