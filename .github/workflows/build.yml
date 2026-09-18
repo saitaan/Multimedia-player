@@ -28,19 +28,41 @@ jobs:
           gradle-version: '8.4'
           validate-wrappers: false
 
-      - name: Auto-Detect Project & Build APK
+      - name: Prepare Project & Build APK
         run: |
-          SETTINGS_FILE=$(find . -maxdepth 3 -name "settings.gradle*" | head -n 1)
-          if [ -n "$SETTINGS_FILE" ]; then
-            TARGET_DIR=$(dirname "$SETTINGS_FILE")
-            echo "Building inside directory: $TARGET_DIR"
-            cd "$TARGET_DIR"
+          echo "=== Step 1: Checking files in repository ==="
+          ls -la
+
+          # If zip file is uploaded, extract it automatically
+          ZIP_FILES=$(find . -maxdepth 2 -name "*.zip")
+          if [ -n "$ZIP_FILES" ]; then
+            for z in $ZIP_FILES; do
+              echo "Extracting $z..."
+              unzip -q -o "$z"
+            done
           fi
 
+          # Find settings.gradle or build.gradle
+          SETTINGS_FILE=$(find . -name "settings.gradle*" -o -name "build.gradle*" | head -n 1)
+
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "::error::Project files not found! Please upload multimedia-player.zip to this repository."
+            echo "Current files in repo:"
+            find . -maxdepth 3
+            exit 1
+          fi
+
+          TARGET_DIR=$(dirname "$SETTINGS_FILE")
+          echo "Moving to project directory: $TARGET_DIR"
+          cd "$TARGET_DIR"
+
+          # Setup wrapper if needed
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
             gradle wrapper --gradle-version 8.4
           fi
           chmod +x ./gradlew
+          
+          echo "=== Step 2: Running Gradle Build ==="
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
