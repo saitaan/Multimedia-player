@@ -22,7 +22,6 @@ jobs:
 
       - name: Auto-Extract Project ZIP
         run: |
-          # Sabhi zip files ko extract karega
           for zip in *.zip; do
             if [ -f "$zip" ]; then
               echo "Extracting $zip..."
@@ -30,7 +29,6 @@ jobs:
             fi
           done
 
-          # Agar files kisi subfolder mein hon toh root par layega
           if [ ! -f "settings.gradle.kts" ] && [ ! -f "settings.gradle" ]; then
             SETTINGS_PATH=$(find . -name "settings.gradle.kts" -o -name "settings.gradle" | head -n 1)
             if [ -n "$SETTINGS_PATH" ]; then
@@ -40,7 +38,13 @@ jobs:
             fi
           fi
 
-          chmod +x gradlew || true
+      - name: Setup Gradle 8.4 Wrapper
+        run: |
+          echo "=== Setting Up Gradle 8.4 ==="
+          curl -sL https://services.gradle.org/distributions/gradle-8.4-bin.zip -o gradle-8.4-bin.zip
+          unzip -q -o gradle-8.4-bin.zip
+          ./gradle-8.4/bin/gradle wrapper --gradle-version 8.4 --distribution-type bin
+          chmod +x gradlew
 
       - name: Build Debug APK
         run: |
